@@ -20,6 +20,7 @@ type Movie struct {
 	OriginCountry    []string `json:"origin_country"`
 	OriginalLanguage string   `json:"original_language"`
 	Genres           []Genre  `json:"genres"`
+	Comentarios      []*Comentario
 }
 
 func MovieDetails(db *sql.DB, ApiToken string, id int) (*Movie, error) {
@@ -28,14 +29,14 @@ func MovieDetails(db *sql.DB, ApiToken string, id int) (*Movie, error) {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
-	header := fmt.Sprintf("Bearer %v", ApiToken)
+	// header := fmt.Sprintf("Bearer %v", ApiToken)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Authorization", header)
+	req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTliMzUzYzVhMzJhZTA1NTY3YTFmOGEwZTRlMjgwZCIsIm5iZiI6MTcyNDI3MzA2OS45NTg0NDcsInN1YiI6IjY2YzY1MDczYWY4OGMxZjZmMDUyOGZiOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.LC5Or0sdxSsaEaQvPBZU4c1mLEsvoL5ch9xIl2w46tQ")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error aca:%v", err)
 	}
 	defer res.Body.Close()
 
@@ -46,5 +47,29 @@ func MovieDetails(db *sql.DB, ApiToken string, id int) (*Movie, error) {
 		return nil, fmt.Errorf("error en decode : %v", err)
 	}
 
+	if err := incrementaVisualizaciones(db, movie.Id); err != nil {
+		return nil, err
+	}
+
+	comentarios, err := DevuelveComentarios(db, movie.Id)
+	if err != nil {
+		return nil, err
+	}
+	movie.Comentarios = comentarios
+
 	return &movie, nil
+}
+
+func incrementaVisualizaciones(db *sql.DB, id int) error {
+	query := `
+		insert into visualizaciones(id_movie, visualizaciones) 
+		values (?, 1)
+		on duplicate key update visualizaciones = visualizaciones + 1
+	`
+	_, err := db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("error en incrementoVisualizaciones : %v", err)
+	}
+
+	return nil
 }

@@ -21,7 +21,7 @@ func RouterHandlers(router *mux.Router, db *sql.DB, apiMovies_access_token strin
 	router.HandleFunc("/login", Login(db, jwt_secret_key)).Methods("POST")
 	// router.HandleFunc("/user", User(db, secret_key)).Methods("GET")
 	router.HandleFunc("/logout", Logout()).Methods("POST")
-	router.HandleFunc("/movie/{id}", Movie(db, apiMovies_access_token)).Methods("GET")
+	router.HandleFunc("/movie/{id}", Movie(db, apiMovies_access_token, jwt_secret_key)).Methods("GET")
 
 }
 
@@ -64,6 +64,7 @@ func Login(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 		}
 
 		var user models.User
+
 		err = db.QueryRow("SELECT id, password FROM users WHERE email = ?", data["email"]).Scan(&user.Id, &user.Password)
 		if err == sql.ErrNoRows {
 			http.Error(w, "user not found", http.StatusNotFound)
@@ -151,9 +152,14 @@ func Logout() http.HandlerFunc {
 	}
 }
 
-func Movie(db *sql.DB, ApiToken string) http.HandlerFunc {
+func Movie(db *sql.DB, ApiToken string, jwt_secret_key string) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := models.GetUserFromCookie(db, r, []byte(jwt_secret_key))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		//recuperar el movie id
 		params := mux.Vars(r)

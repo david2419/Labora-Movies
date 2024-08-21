@@ -15,7 +15,7 @@ type User struct {
 	Password []byte `json:"-"`
 }
 
-func GetUserFromCookie(db *sql.DB, r http.Request, secretKey []byte) (*User, error) {
+func GetUserFromCookie(db *sql.DB, r *http.Request, secretKey []byte) (*User, error) {
 
 	//recuperar la cookie con request
 	cookie, err := r.Cookie("jwt")

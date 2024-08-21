@@ -25,6 +25,7 @@ func CreateTablaUsers(db *sql.DB) error {
 		    id INT AUTO_INCREMENT, 
 		    name VARCHAR(100) NOT NULL,
 		    email VARCHAR(100) NOT NULL UNIQUE,
+			apiToken BLOB NOT NULL,
 			password BLOB NOT NULL,
 		    PRIMARY KEY(id)
 		)
