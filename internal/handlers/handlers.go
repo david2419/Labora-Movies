@@ -14,13 +14,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RouterHandlers(router *mux.Router, db *sql.DB, token string, secret_key string) {
+func RouterHandlers(router *mux.Router, db *sql.DB, apiMovies_access_token string, jwt_secret_key string) {
 
 	//APIS
 	router.HandleFunc("/register", Register(db)).Methods("POST")
-	router.HandleFunc("/login", Login(db, secret_key)).Methods("POST")
-	router.HandleFunc("/user", User(db, secret_key)).Methods("GET")
+	router.HandleFunc("/login", Login(db, jwt_secret_key)).Methods("POST")
+	// router.HandleFunc("/user", User(db, secret_key)).Methods("GET")
 	router.HandleFunc("/logout", Logout()).Methods("POST")
+	router.HandleFunc("/movie/{id}", Movie(db, apiMovies_access_token)).Methods("GET")
+
 }
 
 // Controladores
@@ -51,7 +53,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func Login(db *sql.DB, secret_key string) http.HandlerFunc {
+func Login(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var data map[string]string
@@ -85,7 +87,7 @@ func Login(db *sql.DB, secret_key string) http.HandlerFunc {
 			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
 		})
 
-		token, err := claims.SignedString([]byte(secret_key))
+		token, err := claims.SignedString([]byte(jwt_secret_key))
 		if err != nil {
 			http.Error(w, "could not login", http.StatusInternalServerError)
 			return
@@ -104,37 +106,37 @@ func Login(db *sql.DB, secret_key string) http.HandlerFunc {
 	}
 }
 
-func User(db *sql.DB, secret_key string) http.HandlerFunc {
+// func User(db *sql.DB, secret_key string) http.HandlerFunc {
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("jwt")
-		if err != nil {
-			http.Error(w, "unauthenticated", http.StatusUnauthorized)
-			return
-		}
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		cookie, err := r.Cookie("jwt")
+// 		if err != nil {
+// 			http.Error(w, "unauthenticated", http.StatusUnauthorized)
+// 			return
+// 		}
 
-		//	Obtener info del JWT
-		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secret_key), nil
-		})
-		if err != nil {
-			http.Error(w, "unauthenticated", http.StatusUnauthorized)
-			return
-		}
-		claims := token.Claims.(*jwt.StandardClaims)
+// 		//	Obtener info del JWT
+// 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+// 			return []byte(secret_key), nil
+// 		})
+// 		if err != nil {
+// 			http.Error(w, "unauthenticated", http.StatusUnauthorized)
+// 			return
+// 		}
+// 		claims := token.Claims.(*jwt.StandardClaims)
 
-		//	Consultamos data en la DB mediante el id del User, obtenido del JWT
-		var user models.User
+// 		//	Consultamos data en la DB mediante el id del User, obtenido del JWT
+// 		var user models.User
 
-		err = db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", claims.Issuer).Scan(&user.Id, &user.Name, &user.Email)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+// 		err = db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", claims.Issuer).Scan(&user.Id, &user.Name, &user.Email)
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
 
-		json.NewEncoder(w).Encode(user)
-	}
-}
+// 		json.NewEncoder(w).Encode(user)
+// 	}
+// }
 
 func Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +149,30 @@ func Logout() http.HandlerFunc {
 
 		json.NewEncoder(w).Encode(map[string]string{"message": "success"})
 	}
+}
+
+func Movie(db *sql.DB, ApiToken string) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		//recuperar el movie id
+		params := mux.Vars(r)
+		idStr := params["id"]
+
+		// Convertir el ID a entero
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		movie, err := models.MovieDetails(db, ApiToken, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		// w.WriteHeader().content
+		json.NewEncoder(w).Encode(movie)
+	}
+
 }

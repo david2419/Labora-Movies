@@ -47,7 +47,8 @@ func CreateTablaComentarios(db *sql.DB) error {
 		id_usuario INT NOT NULL,
 		comentario VARCHAR(1000) NOT NULL,
 		PRIMARY KEY(id),
-		FOREIGN KEY(id_usuario) references users(id)
+		FOREIGN KEY(id_usuario) references users(id),
+		FOREIGN KEY(id_movie) references visualizaciones(id_movie)
 		)
 		`
 
@@ -56,17 +57,16 @@ func CreateTablaComentarios(db *sql.DB) error {
 		return err
 	}
 
-	log.Println("Table users created or already exists")
+	log.Println("Table comentarios created or already exists")
 	return nil
 }
 
 func CreateTablaVisualizaciones(db *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS visualizaciones (
-		id INT AUTO_INCREMENT,
-		id_movie INT NOT NULL,
+		id_movie INT NOT NULL UNIQUE,
 		visualizaciones int,
-		PRIMARY KEY(id)
+		PRIMARY KEY(id_movie)
 		)	
 		`
 
@@ -75,6 +75,6 @@ func CreateTablaVisualizaciones(db *sql.DB) error {
 		return err
 	}
 
-	log.Println("Table users created or already exists")
+	log.Println("Table visualizaciones created or already exists")
 	return nil
 }

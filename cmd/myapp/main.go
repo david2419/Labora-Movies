@@ -47,7 +47,7 @@ func main() {
 	// })
 	//handler := c.Handler(router)
 
-	handlers.RouterHandlers(router, db, cfg.Access_Token, cfg.Secret_Key)
+	handlers.RouterHandlers(router, db, cfg.ApiMovies_Access_Token, cfg.JWT_Secret_Key)
 
 	//Listen Server
 	log.Printf("Server running on port: %v", cfg.Server_Adress)
