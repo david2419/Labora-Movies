@@ -1,0 +1,4 @@
+server_adress : ":8080"
+dataBase_url : "root:modano24@tcp(localhost:3306)/movies_db"
+access_token : "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2ZjIwZjVkNjM0NjA5NDlkM2Y5YWY3MDI2NjEyMjhiNyIsIm5iZiI6MTcyNDAxNjkzMC45NzAzMDgsInN1YiI6IjY2YzI2N2QwOWEwNzhjNTVjYjVkNmVhYSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.yxzALOf6w_sVFRs0dII_xZR417UgwjBADet-P5th"
+secret_key : "secreto"
