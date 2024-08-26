@@ -19,9 +19,9 @@ func RouterHandlers(router *mux.Router, db *sql.DB, apiMovies_access_token strin
 	//APIS
 	router.HandleFunc("/register", Register(db)).Methods("POST")
 	router.HandleFunc("/login", Login(db, jwt_secret_key)).Methods("POST")
-	// router.HandleFunc("/user", User(db, secret_key)).Methods("GET")
 	router.HandleFunc("/logout", Logout()).Methods("POST")
 	router.HandleFunc("/movie/{id}", Movie(db, apiMovies_access_token, jwt_secret_key)).Methods("GET")
+	router.HandleFunc("/movie/comentario", AgregarComentario(db, jwt_secret_key)).Methods("POST")
 
 }
 
@@ -107,38 +107,6 @@ func Login(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 	}
 }
 
-// func User(db *sql.DB, secret_key string) http.HandlerFunc {
-
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		cookie, err := r.Cookie("jwt")
-// 		if err != nil {
-// 			http.Error(w, "unauthenticated", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		//	Obtener info del JWT
-// 		token, err := jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
-// 			return []byte(secret_key), nil
-// 		})
-// 		if err != nil {
-// 			http.Error(w, "unauthenticated", http.StatusUnauthorized)
-// 			return
-// 		}
-// 		claims := token.Claims.(*jwt.StandardClaims)
-
-// 		//	Consultamos data en la DB mediante el id del User, obtenido del JWT
-// 		var user models.User
-
-// 		err = db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", claims.Issuer).Scan(&user.Id, &user.Name, &user.Email)
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		json.NewEncoder(w).Encode(user)
-// 	}
-// }
-
 func Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
@@ -155,7 +123,7 @@ func Logout() http.HandlerFunc {
 func Movie(db *sql.DB, ApiToken string, jwt_secret_key string) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := models.GetUserFromCookie(db, r, []byte(jwt_secret_key))
+		_, err := models.GetUserFromCookie(db, r, jwt_secret_key)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -180,5 +148,43 @@ func Movie(db *sql.DB, ApiToken string, jwt_secret_key string) http.HandlerFunc 
 		// w.WriteHeader().content
 		json.NewEncoder(w).Encode(movie)
 	}
-
 }
+
+func AgregarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		user, err := models.GetUserFromCookie(db, r, jwt_secret_key)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var comentario models.Comentario
+		comentario.Id_usuario = int(user.Id)
+		if err := json.NewDecoder(r.Body).Decode(&comentario); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := models.CrearComentario(db, comentario.Id_movie, comentario.Id_usuario, comentario.Texto); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(comentario)
+	}
+}
+
+// func EliminarComentario()http.HandlerFunc{
+// 	return func(w http.ResponseWriter, r *http.Request) {
+
+// 	}
+// }
+
+// func EditarComentario()http.HandlerFunc{
+// 	return func(w http.ResponseWriter, r *http.Request) {
+
+// 	}
+// }

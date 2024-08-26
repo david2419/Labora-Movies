@@ -15,7 +15,7 @@ type User struct {
 	Password []byte `json:"-"`
 }
 
-func GetUserFromCookie(db *sql.DB, r *http.Request, secretKey []byte) (*User, error) {
+func GetUserFromCookie(db *sql.DB, r *http.Request, secretKey string) (*User, error) {
 
 	//recuperar la cookie con request
 	cookie, err := r.Cookie("jwt")
@@ -25,10 +25,10 @@ func GetUserFromCookie(db *sql.DB, r *http.Request, secretKey []byte) (*User, er
 
 	//decodificar el jwt
 
-	token, err := jwt.ParseWithClaims(cookie.Value, jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+	token, err := jwt.ParseWithClaims(cookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
 	})
-	if err != nil || !token.Valid {
+	if err != nil {
 		return nil, errors.New("invalid token")
 	}
 
