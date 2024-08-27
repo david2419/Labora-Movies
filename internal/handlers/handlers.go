@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"proyectoFinal/pkg/models"
@@ -22,7 +23,10 @@ func RouterHandlers(router *mux.Router, db *sql.DB, apiMovies_access_token strin
 	router.HandleFunc("/logout", Logout()).Methods("POST")
 	router.HandleFunc("/movie/{id}", Movie(db, apiMovies_access_token, jwt_secret_key)).Methods("GET")
 	router.HandleFunc("/movie/comentario", AgregarComentario(db, jwt_secret_key)).Methods("POST")
-
+	router.HandleFunc("/movie/comentario", EditarComentario(db, jwt_secret_key)).Methods("PUT")
+	router.HandleFunc("/movie/comentario", EliminarComentario(db, jwt_secret_key)).Methods("DELETE")
+	router.HandleFunc("/visualizaciones", Visualizaciones(db)).Methods("GET")
+	router.HandleFunc("/usuario", EditarUsuario(db, jwt_secret_key)).Methods("PUT")
 }
 
 // Controladores
@@ -129,7 +133,7 @@ func Movie(db *sql.DB, ApiToken string, jwt_secret_key string) http.HandlerFunc 
 			return
 		}
 
-		//recuperar el movie id
+		//recuperar el movie id enviado en la URL
 		params := mux.Vars(r)
 		idStr := params["id"]
 
@@ -154,6 +158,7 @@ func AgregarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		//Verificamos si hay un usuario loggeado y se obtiene el usuario
 		user, err := models.GetUserFromCookie(db, r, jwt_secret_key)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -161,7 +166,7 @@ func AgregarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 		}
 
 		var comentario models.Comentario
-		comentario.Id_usuario = int(user.Id)
+		comentario.Id_usuario = int(user.Id) // Se asigna el id de usuario obtenido del usuario loggeado
 		if err := json.NewDecoder(r.Body).Decode(&comentario); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -177,14 +182,115 @@ func AgregarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 	}
 }
 
-// func EliminarComentario()http.HandlerFunc{
-// 	return func(w http.ResponseWriter, r *http.Request) {
+func EditarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
 
-// 	}
-// }
+	return func(w http.ResponseWriter, r *http.Request) {
 
-// func EditarComentario()http.HandlerFunc{
-// 	return func(w http.ResponseWriter, r *http.Request) {
+		user, err := models.GetUserFromCookie(db, r, jwt_secret_key)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-// 	}
-// }
+		var comentarioReq models.Comentario
+		if err := json.NewDecoder(r.Body).Decode(&comentarioReq); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		comentarioAeditar, err := models.ObtenerComentario(db, comentarioReq.Id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if comentarioAeditar.Id_usuario != int(user.Id) {
+			http.Error(w, "No puedes editar comentarios que no son tuyos", http.StatusBadRequest)
+			return
+		}
+
+		if err := models.EditarComentario(db, comentarioAeditar, comentarioReq.Texto); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode("Comentario actualizado")
+
+	}
+}
+
+func EliminarComentario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		user, err := models.GetUserFromCookie(db, r, jwt_secret_key)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var comentarioReq models.Comentario
+		if err := json.NewDecoder(r.Body).Decode(&comentarioReq); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		comentarioAeliminar, err := models.ObtenerComentario(db, comentarioReq.Id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if comentarioAeliminar.Id_usuario != int(user.Id) {
+			http.Error(w, "No puedes eliminar comentarios que no son tuyos", http.StatusBadRequest)
+			return
+		}
+
+		if err := models.EliminarComentario(db, comentarioAeliminar); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode("Comentario eliminado")
+
+	}
+}
+
+func Visualizaciones(db *sql.DB) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		visualizaciones, err := models.GetVisualizaciones(db)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error cargando visualizaciones: %v", err).Error(), http.StatusConflict)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(visualizaciones); err != nil {
+			http.Error(w, fmt.Sprintf("Error codificando JSON: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func EditarUsuario(db *sql.DB, jwt_secret_key string) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		user, err := models.GetUserFromCookie(db, r, jwt_secret_key)
+		if err != nil {
+			http.Error(w, "error obteniendo el usuario de la cookie", http.StatusBadRequest)
+			return
+		}
+
+		if err := models.ModificarUsuario(db, user.Id, r); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "usuario modificado correctamente"})
+
+	}
+}

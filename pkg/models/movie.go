@@ -29,10 +29,10 @@ func MovieDetails(db *sql.DB, ApiToken string, id int) (*Movie, error) {
 
 	req, _ := http.NewRequest("GET", url, nil)
 
-	// header := fmt.Sprintf("Bearer %v", ApiToken)
+	header := fmt.Sprintf("Bearer %v", ApiToken)
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTliMzUzYzVhMzJhZTA1NTY3YTFmOGEwZTRlMjgwZCIsIm5iZiI6MTcyNDI3MzA2OS45NTg0NDcsInN1YiI6IjY2YzY1MDczYWY4OGMxZjZmMDUyOGZiOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.LC5Or0sdxSsaEaQvPBZU4c1mLEsvoL5ch9xIl2w46tQ")
+	req.Header.Add("Authorization", header)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

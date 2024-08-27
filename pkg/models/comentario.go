@@ -64,11 +64,23 @@ func EditarComentario(db *sql.DB, comentarioAeditar *Comentario, Nuevocomentario
 	query := `
 		UPDATE comentarios
         SET comentario = ?
-        WHERE id_comentario = ?	
+        WHERE id= ?	
 	`
-	_, err := db.Exec(query, comentarioAeditar.Id, Nuevocomentario)
+	_, err := db.Exec(query, Nuevocomentario, comentarioAeditar.Id)
 	if err != nil {
 		return fmt.Errorf("error al editar comentario: %v", err)
+	}
+	return nil
+}
+
+func EliminarComentario(db *sql.DB, comentarioAeliminar *Comentario) error {
+	query := `
+		DELETE FROM comentarios
+        WHERE id= ?	
+	`
+	_, err := db.Exec(query, comentarioAeliminar.Id)
+	if err != nil {
+		return fmt.Errorf("error al eliminar comentario: %v", err)
 	}
 	return nil
 }
