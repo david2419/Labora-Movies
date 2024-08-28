@@ -10,7 +10,7 @@ El objetivo de este proyecto es que desarrollen un sistema completo de Administr
     - Utilizar la API de The Movie Database (TMDb) para obtener información detallada sobre películas. Deberán integrar los endpoints proporcionados por TMDb para acceder a la información necesaria.
 2. **API:**
     - **Endpoints:**
-        - **Visualizar Detalles de Película y Contador de Visualizaciones:**
+        - **Visualizar Detalles de Película y Contador de Visualizaciones:** Solo funciona si eres un usuario registrado y estas loggeado
             - **Método:** GET
             - **Descripción:** Permite visualizar detalles específicos de una película identificada por su movie_id en TMDb (incluyendo comentarios de los usuarios). Además, incrementa en 1 el contador de visualizaciones en una tabla interna del sistema.
             - **Parámetros de Entrada:**
@@ -18,27 +18,27 @@ El objetivo de este proyecto es que desarrollen un sistema completo de Administr
         - **Obtener las n películas más visualizadas:**
             - **Método:** GET
             - **Descripción:** Retorna información sobre las n películas más visualizada en el sistema. “n” es un valor constante y arbitrario del sistema.
-        - **Agregar Comentario:**
+        - **Agregar Comentario:** Solo funciona si estas loggeado
             - **Método:** POST
             - **Descripción:** Permite a los usuarios agregar comentarios a una película en particular.
             - **Parámetros de Entrada:**
                 - `usuario_id` (identificación única del usuario)
                 - `movie_id` (identificación única de la película en TMDb)
                 - `comentario` (texto del comentario)
-        - **Excluir Comentario:**
+        - **Excluir Comentario:** solo puedes eliminar comentarios tuyos
             - **Método:** DELETE
             - **Descripción:** Permite a los usuarios eliminar uno de sus comentarios previamente agregados.
             - **Parámetros de Entrada:**
                 - `usuario_id` (identificación única del usuario)
                 - `comentario_id` (identificación única del comentario)
-        - **Editar Comentario:**
+        - **Editar Comentario:** solo puedes editar tus comentarios
             - **Método:** PUT
             - **Descripción:** Permite a los usuarios editar uno de sus comentarios previamente agregados.
             - **Parámetros de Entrada:**
                 - `usuario_id` (identificación única del usuario)
                 - `comentario_id` (identificación única del comentario)
                 - `nuevo_texto` (nuevo texto del comentario)
-        - **Endpoints para Gestión de Usuarios:**
+        - **Endpoints para Gestión de Usuarios:** solo puedes editar informacion de tu usuario, debes estar loggeado
             - Permitir a los usuarios gestionar su cuenta, incluyendo la modificación de información personal (email, password, nickname).
                 - **Endpoint para Modificar Información del Usuario:**
                     - **Método:** PUT
