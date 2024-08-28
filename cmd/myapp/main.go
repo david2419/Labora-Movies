@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"proyectoFinal/internal/config"
@@ -18,13 +19,15 @@ func main() {
 	if err != nil {
 		log.Fatal("No se cargaron las configuraciones iniciales")
 	}
+	fmt.Println("Se cargaron las configuraciones iniciales de forma exitosa")
 
 	//Database
 	//Conexion
 	db, err := database.Connect(cfg.DatabaseUrl)
 	if err != nil {
-		log.Fatal("No se conectó la BD")
+		log.Fatalf("No se conectó la BD: %v", err)
 	}
+	fmt.Println("Se conectó a la base de datos RDS aws de forma exitosa")
 	defer db.Close()
 	//Creacion de tablas
 	if err := database.CreateTablaUsers(db); err != nil {

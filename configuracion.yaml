@@ -1,4 +1,5 @@
 server_adress : ":8080"
-dataBase_url : "root:modano24@tcp(localhost:3306)/movies_db"
+# conexion local: dataBase_url : "root:modano24@tcp(localhost:3306)/movies_db"
+dataBase_url : "admin:martin1234*@tcp(database-1.cl0s6okycuny.us-east-2.rds.amazonaws.com:3306)/movies_db"
 apiMovies_access_token : "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTliMzUzYzVhMzJhZTA1NTY3YTFmOGEwZTRlMjgwZCIsIm5iZiI6MTcyNDI3MzA2OS45NTg0NDcsInN1YiI6IjY2YzY1MDczYWY4OGMxZjZmMDUyOGZiOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.LC5Or0sdxSsaEaQvPBZU4c1mLEsvoL5ch9xIl2w46tQ"
 jwt_secret_key : "secreto"
